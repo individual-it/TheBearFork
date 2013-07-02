@@ -27,19 +27,19 @@ http://sourceforge.net/projects/thebear/
 
 ### Fork of Release 1.0.1
 
-	* automaticly adds URL that is pased by $_GET['url']
+* automaticly adds URL that is pased by $_GET['url']
 	
-	* setting for auto-pause public users downloads if the file is bigger than certain size
+* setting for auto-pause public users downloads if the file is bigger than certain size
+
+* posibility to forbid the public users to Un-Pause downloads
 	
-	* posibility to forbid the public users to Un-Pause downloads
-	
-	* propper check for permissions, not just hiding controls
+* propper check for permissions, not just hiding controls
  
 ### Release 1.0.1
 
-	* some minor bug fixing
+* some minor bug fixing
  
-Installation notes:
+## Installation notes:
 
 1. Just make sure protected/ and assets/ directories are writable/owned by the web server
 
@@ -51,8 +51,7 @@ Installation notes:
    
 4. For the simplest way of running aria2 as a background process on Linux, one may executes this command:
    "nohup /usr/local/bin/aria2c --enable-rpc=true --rpc-listen-port=6800 --rpc-listen-all=true --dir=/home/USER/downloads --log=/home/USER/aria.log --log-level=error --dht-listen-port=6801 --rpc-user=user --rpc-passwd=pass -D"
-
-4-* Please replace USER with your Linux username and check if your aria2 execution path is the same as above
+   Please replace USER with your Linux username and check if your aria2 execution path is the same as above
 
 ## Other notes:
 
