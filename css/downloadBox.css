@@ -1,0 +1,38 @@
+#downloadBox {
+	//background-color: #E5F1F4;
+    //border: 1px solid #80B8D6;
+    //border-radius: 5px 5px 5px 5px;
+    height: 2.55em;
+    padding-left: 5px;
+    padding-right: 5px;	
+}
+
+#downloadBox #row {
+	float: left;
+    margin: 5px;
+    width: 96%;
+    font-weight:bold;
+}
+
+#downloadBox label {
+	float: left;
+	margin-right: 10px;
+    margin-top: 3px;
+    width:100px;
+    text-align:center;
+}
+
+#downloadBox #row input {
+    width: 86%;
+    float:left;
+}
+
+#downloadBox #row .required span {
+	color:red;
+}
+
+#downloadBox #buttons {
+    width: 1em;
+    float: left;
+    margin-top: 5px;
+}

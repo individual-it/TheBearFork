@@ -1,0 +1,52 @@
+#gridMenu {
+	background-color: #E5F1F4;
+    border: 1px solid #80B8D6;
+    border-radius: 5px 5px 5px 5px;
+    padding: 0.3em 1em;
+    vertical-align: middle;
+    height:21px;
+}
+
+#gridMenu #buttons {
+	height:21px;
+	width:50%;
+	float:left;
+}
+
+#gridMenu #configs {
+	height:21px;
+	//width:15em;
+	display:inline;
+	float:right;
+}
+
+#gridMenu #configs #button{
+ 	float: left;
+    margin-top: 2px;
+    width: 20px;
+}
+
+#gridMenu #configs #row input {
+ 	height: 8px;
+    font-size:10px;
+    margin-top:2px;
+}
+
+#gridMenu #configs label {
+    font-size:11px;
+}
+
+#gridMenu #buttons .menu {
+	list-style-type:none;
+	padding:0em ;
+	margin:0px;
+	margin-top:2px;
+}
+
+#gridMenu .menu ul {
+}
+
+#gridMenu .menu li {
+	float:left ;
+	margin-right:1em;
+}
