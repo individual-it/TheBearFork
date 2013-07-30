@@ -61,13 +61,31 @@ class ItemController extends Controller
 				$validate = $model->validate() ;
 
 				if ($validate) {
-					$this->_aria->addMetalink(base64_encode(file_get_contents($model->metaLinkFile->tempName))) ;
+					$result=$this->_aria->addMetalink(base64_encode(file_get_contents($model->metaLinkFile->tempName))) ;
 					if ($this->_aria->hasError())
 					{
 						$message = $this->_aria->getError() ; $type = 'error';
 					}
 					else
-					{ $message = 'Successfully Added' ; $type = 'success';
+					{ 
+						$message = 'Successfully Added' ; $type = 'success';
+						/*
+						 * Artur Neumann INF www.inf.org
+						* pause the download if its bigger that the size given in autoPauseSizeDownloads
+						*/
+						if (Yii::app()->Setting->autoPauseSizeDownloads > 0)
+						{
+							$totalLength=$this->_checkTotalLength($result[0]);
+													
+							if ($totalLength >=  Yii::app()->Setting->autoPauseSizeDownloads || $totalLength <= 0)
+							{
+								$this->_aria->pause($result[0]);
+
+								Yii::log($this->_createFileList($result[0])." has been paused because of its size",'info', __METHOD__) ;						
+							}
+						}						
+						
+						
 					}
 				} else
 				{ $message = $model->getError('metaLinkFile') ; $type = 'error' ;
@@ -93,13 +111,30 @@ class ItemController extends Controller
 				$model->torrentFile=CUploadedFile::getInstance($model,'torrentFile');
 				$validate = $model->validate() ;
 				if ($validate) {
-					$this->_aria->addTorrent(base64_encode(file_get_contents($model->torrentFile->tempName))) ;
+					$itemID=$this->_aria->addTorrent(base64_encode(file_get_contents($model->torrentFile->tempName))) ;
+					
 					if ($this->_aria->hasError())
 					{
 						$message = $this->_aria->getError() ; $type = 'error';
 					}
 					else
-					{ $message = 'Successfully Added' ; $type = 'success';
+					{ 
+						/*
+						 * Artur Neumann INF www.inf.org
+						* pause the download if its bigger that the size given in autoPauseSizeDownloads
+						*/
+						if (Yii::app()->Setting->autoPauseSizeDownloads > 0)
+						{
+							$totalLength=$this->_checkTotalLength($itemID);
+						
+							if ($totalLength >=  Yii::app()->Setting->autoPauseSizeDownloads || $totalLength <= 0)
+							{
+								$this->_aria->pause($itemID);
+
+								Yii::log($this->_createFileList($itemID)." has been paused because of its size",'info', __METHOD__) ;
+							}
+						}
+						$message = 'Successfully Added' ; $type = 'success';
 					}
 				} else
 				{ $message = $model->getError('torrentFile') ; $type = 'error' ;
@@ -131,7 +166,7 @@ class ItemController extends Controller
 					$model->attributes=$_POST['UriItemForm'];
 					if ($model->validate()) {
 							
-						$arai2Message = $this->_aria->addUri(array($model->url)) ;
+						$itemID = $this->_aria->addUri(array($model->url)) ;
 						Yii::log($model->url." has been added as a URI file",'info', __METHOD__) ;
 
 						/*
@@ -140,27 +175,24 @@ class ItemController extends Controller
 						*/
 						if (Yii::app()->Setting->autoPauseSizeDownloads > 0)
 						{
-							//we have to wait a while because the totalLength is not availiable imediately after adding a download
-							$max_time_to_wait = ini_get('max_execution_time');
-							if ($max_time_to_wait == 0) {
-								$max_time_to_wait = 10;
-							} else {
-								$max_time_to_wait = $max_time_to_wait / 10 * 9;
-							}
-							$time_waited = 0;
-							$status['totalLength'] = 0;
-							$status['status'] = 'active';
+							$totalLength=$this->_checkTotalLength($itemID);							
 
-							while ($status['status'] == 'active' && $status['totalLength'] <= 0 && $time_waited < $max_time_to_wait)
+							if ($totalLength >=  Yii::app()->Setting->autoPauseSizeDownloads || $totalLength <= 0)
 							{
-								$status=$this->_aria->tellStatus($arai2Message, array("totalLength","status"));
-							}
-
-							if ($status['totalLength'] >=  Yii::app()->Setting->autoPauseSizeDownloads || $status['totalLength'] <= 0)
-							{
-								$this->_aria->pause($arai2Message);
+								$this->_aria->pause($itemID);
 								Yii::log($model->url." has been paused because of its size",'info', __METHOD__) ;
-
+							}
+							
+							//check also the size of every follower e.g. if the URL was a meta link 
+							$status=$this->_aria->tellStatus($itemID);
+							foreach ($status['followedBy'] as $follower) {
+								$totalLength=$this->_checkTotalLength($follower);
+								if ($totalLength >=  Yii::app()->Setting->autoPauseSizeDownloads || $totalLength <= 0)
+								{
+									$this->_aria->pause($follower);
+								
+									Yii::log($this->_createFileList($follower) ." has been paused because of its size",'info', __METHOD__) ;							
+								}
 							}
 						}
 
@@ -272,6 +304,53 @@ class ItemController extends Controller
 			Yii::app()->end() ;
 		}
 
+	}
+	
+	/**
+	 * returns the total length of the file
+	 *
+	 * @param 	int 	the aria2 item gid
+	 * @return int 		the length of the file
+	* @author Artur Neumann INF www.inf.org
+	* 
+	*/
+	private function _checkTotalLength ($itemID) {
+		//we have to wait a while because the totalLength is not availiable imediately after adding a download
+		$max_time_to_wait = ini_get('max_execution_time');
+		if ($max_time_to_wait == 0) {
+			$max_time_to_wait = 10;
+		} else {
+			$max_time_to_wait = $max_time_to_wait / 10 * 9;
+		}
+		$time_waited = 0;
+		$status['totalLength'] = 0;
+		$status['status'] = 'active';
+		
+		while ($status['status'] == 'active' && $status['totalLength'] <= 0 && $time_waited < $max_time_to_wait)
+		{
+			$status=$this->_aria->tellStatus($itemID, array("totalLength","status"));
+		}
+		
+		return $status['totalLength'];
+	}
+	
+	/**
+	 * creates a list (string) of the files in the aria2 item separated by space
+	 *
+	 * @param 	int 	the aria2 item gid
+	 * @return	string 	list of files, separated by space
+	 * @author Artur Neumann INF www.inf.org
+	 *
+	 */
+	private function _createFileList($itemID) {
+		$files=$this->_aria->getFiles($itemID);
+		
+		$filelist = "";
+		for($i=0;$i!=sizeof($files);++$i) {
+			$filelist .= basename($files[$i]['path']) . " ";
+		}
+		
+		return $filelist;
 	}
 
 }
